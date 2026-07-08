@@ -1,16 +1,13 @@
-# XcodeGen spec — regeneration fallback.
+# XcodeGen spec — source of truth for the Xcode project (household convention).
 #
-# The repo already contains a ready-to-open PatioFinder.xcodeproj. This file is
-# only needed if you want to regenerate the project from scratch:
-#
-#   brew install xcodegen
-#   xcodegen generate
+# After changing files or settings:  xcodegen generate
+# (deploy.sh runs this automatically if XcodeGen is installed.)
 #
 # See https://github.com/yonaskolb/XcodeGen
 
 name: PatioFinder
 options:
-  bundleIdPrefix: com.patiofinder
+  bundleIdPrefix: com.levelup
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -21,6 +18,7 @@ configFiles:
 
 settings:
   base:
+    DEVELOPMENT_TEAM: "6A4J2GTB6F"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 
@@ -33,7 +31,9 @@ targets:
       - PatioFinder
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.patiofinder.app
+        PRODUCT_BUNDLE_IDENTIFIER: com.levelup.patiofinder
+        DEVELOPMENT_TEAM: "6A4J2GTB6F"
+        CODE_SIGN_STYLE: Automatic
         INFOPLIST_FILE: PatioFinder/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1"

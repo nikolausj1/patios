@@ -28,6 +28,8 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>PatioFinder uses your location and compass to point you toward the nearest outdoor restaurant patio.</string>
 	<key>GooglePlacesAPIKey</key>
