@@ -1,0 +1,84 @@
+{
+  "patios": [
+    {
+      "id": "seed-zazie",
+      "name": "Zazie",
+      "latitude": 37.7601,
+      "longitude": -122.4443,
+      "address": "941 Cole St, San Francisco, CA",
+      "rating": 4.6
+    },
+    {
+      "id": "seed-park-chalet",
+      "name": "Park Chalet Garden",
+      "latitude": 37.7690,
+      "longitude": -122.5093,
+      "address": "1000 Great Hwy, San Francisco, CA",
+      "rating": 4.3
+    },
+    {
+      "id": "seed-the-ramp",
+      "name": "The Ramp",
+      "latitude": 37.7601,
+      "longitude": -122.3869,
+      "address": "855 Terry A Francois Blvd, San Francisco, CA",
+      "rating": 4.4
+    },
+    {
+      "id": "seed-el-techo",
+      "name": "El Techo",
+      "latitude": 37.7521,
+      "longitude": -122.4197,
+      "address": "2516 Mission St, San Francisco, CA",
+      "rating": 4.5
+    },
+    {
+      "id": "seed-foreign-cinema",
+      "name": "Foreign Cinema",
+      "latitude": 37.7565,
+      "longitude": -122.4189,
+      "address": "2534 Mission St, San Francisco, CA",
+      "rating": 4.5
+    },
+    {
+      "id": "seed-cavallo-point",
+      "name": "Cavallo Point Terrace",
+      "latitude": 37.8329,
+      "longitude": -122.4795,
+      "address": "601 Murray Cir, Sausalito, CA",
+      "rating": 4.6
+    },
+    {
+      "id": "seed-greens",
+      "name": "Greens Restaurant",
+      "latitude": 37.8066,
+      "longitude": -122.4327,
+      "address": "2 Marina Blvd, San Francisco, CA",
+      "rating": 4.4
+    },
+    {
+      "id": "seed-anchor-oyster",
+      "name": "Beach Chalet Brewery",
+      "latitude": 37.7695,
+      "longitude": -122.5107,
+      "address": "1000 Great Hwy, San Francisco, CA",
+      "rating": 4.2
+    },
+    {
+      "id": "seed-trick-dog",
+      "name": "Trick Dog Rooftop",
+      "latitude": 37.7599,
+      "longitude": -122.4128,
+      "address": "3010 20th St, San Francisco, CA",
+      "rating": 4.5
+    },
+    {
+      "id": "seed-hi-tops",
+      "name": "Café Flore Patio",
+      "latitude": 37.7642,
+      "longitude": -122.4350,
+      "address": "2298 Market St, San Francisco, CA",
+      "rating": 4.3
+    }
+  ]
+}

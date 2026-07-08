@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods / Carthage (not used, but ignored for safety)
+Pods/
+Carthage/Build/
+
+# Note: Config.xcconfig is intentionally tracked with a placeholder so the
+# project builds on a fresh clone. Put your real API key there and run
+# `git update-index --skip-worktree Config.xcconfig` to avoid committing it.

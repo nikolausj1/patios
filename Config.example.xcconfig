@@ -1,0 +1,13 @@
+// PatioFinder build configuration — EXAMPLE.
+//
+// Setup:
+//   1. Copy this file to `Config.xcconfig` (which is gitignored).
+//   2. Paste your Google Places API key below.
+//   3. In Xcode: select the PatioFinder project ▸ Info tab ▸ Configurations,
+//      and set both Debug and Release to use `Config.xcconfig` (already wired
+//      if you opened the provided project).
+//
+// Leaving the key as-is (or empty) makes the app run in demo mode using the
+// bundled sample patios in Resources/Patios.json.
+
+GOOGLE_PLACES_API_KEY = YOUR_GOOGLE_PLACES_API_KEY
