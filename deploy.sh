@@ -73,12 +73,13 @@ if command -v xcodegen >/dev/null 2>&1; then
   step "Regenerating $PROJECT from project.yml…"
   xcodegen generate
 fi
+[[ -d "$PROJECT" ]] || die "No $PROJECT found. Install XcodeGen and re-run:  brew install xcodegen"
 
 # --- Dropbox codesigning guard -----------------------------------------------
 xattr -cr . 2>/dev/null || true
 
 # --- build & sign (Recipe A: generic device, automatic provisioning) ---------
-step "Building & signing ($CONFIG) as $BUNDLE_ID…"
+step "Building & signing ($CONFIG) as ${BUNDLE_ID}..."
 xcodebuild \
   -project "$PROJECT" \
   -scheme "$SCHEME" \

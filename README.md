@@ -27,7 +27,11 @@ the map to see it in context.
 
 ## Getting started
 
-1. Open `PatioFinder.xcodeproj` in Xcode.
+The fastest path is `./deploy.sh` (below), which generates the project, builds,
+and installs to a connected iPhone in one command. To open it in Xcode manually:
+
+1. Generate the project first: `xcodegen generate` (the `.xcodeproj` is not
+   committed — `project.yml` is the source of truth). Then open `PatioFinder.xcodeproj`.
 2. Select the **PatioFinder** target ▸ **Signing & Capabilities** and choose your
    development **Team** (needed to run on a device).
 3. Build & run on your iPhone.
