@@ -43,6 +43,10 @@ die()  { printf '\n\033[1;31m✗ %s\033[0m\n' "$1" >&2; exit 1; }
 command -v xcodebuild >/dev/null || die "Xcode not found. Install it, then: sudo xcode-select -s /Applications/Xcode.app"
 [[ -d "PatioFinder" ]] || die "Run this from the repo root (couldn't find the PatioFinder/ sources)."
 
+# Ensure a build config exists (gitignored; holds your API key). Placeholder =
+# demo/local-via-Apple mode until you paste a Google Places key into it.
+[[ -f Config.xcconfig ]] || cp Config.example.xcconfig Config.xcconfig
+
 # --- confirm the target device is connected ----------------------------------
 step "Checking for the target iPhone…"
 DEVJSON="$(mktemp)"; trap 'rm -f "$DEVJSON"' EXIT

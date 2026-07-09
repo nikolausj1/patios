@@ -27,6 +27,7 @@ final class PatioViewModel: ObservableObject {
     private let resortThresholdMeters: Double = 25
 
     private let seedProvider = SeedPatioProvider()
+    private let mapKitProvider = MapKitPatioProvider()
     private var liveProvider: PatioProvider?
     private var lastSortLocation: CLLocation?
     private var cancellables = Set<AnyCancellable>()
@@ -84,38 +85,29 @@ final class PatioViewModel: ObservableObject {
         loadState = .loading
         let selectedID = currentSelectionID
 
-        do {
-            var result: [Patio]
-            if let liveProvider {
-                result = try await liveProvider.nearbyPatios(around: coordinate,
-                                                             radiusMeters: searchRadiusMeters)
-                usingSeedData = false
-                // If the live call succeeds but returns nothing, fall back to seed.
-                if result.isEmpty {
-                    result = try await seedProvider.nearbyPatios(around: coordinate,
-                                                                radiusMeters: searchRadiusMeters)
-                    usingSeedData = true
-                }
-            } else {
-                result = try await seedProvider.nearbyPatios(around: coordinate,
-                                                            radiusMeters: searchRadiusMeters)
-                usingSeedData = true
-            }
+        var result: [Patio] = []
+        var fromSeed = false
 
-            apply(patios: result, around: coordinate, preservingSelectionID: selectedID)
-            loadState = patios.isEmpty ? .empty : .loaded
-        } catch {
-            // Network/decoding failure → try the offline seed so the app still works.
-            if let seed = try? await seedProvider.nearbyPatios(around: coordinate,
-                                                               radiusMeters: searchRadiusMeters),
-               !seed.isEmpty {
-                usingSeedData = true
-                apply(patios: seed, around: coordinate, preservingSelectionID: selectedID)
-                loadState = .loaded
-            } else {
-                loadState = .error(friendlyMessage(for: error))
-            }
+        // 1) Google Places (verified outdoor seating) when a key is configured.
+        if let liveProvider {
+            result = (try? await liveProvider.nearbyPatios(around: coordinate,
+                                                           radiusMeters: searchRadiusMeters)) ?? []
         }
+        // 2) Apple MapKit — keyless local search (works with no API key).
+        if result.isEmpty {
+            result = (try? await mapKitProvider.nearbyPatios(around: coordinate,
+                                                             radiusMeters: searchRadiusMeters)) ?? []
+        }
+        // 3) Bundled sample list — last resort (e.g. offline).
+        if result.isEmpty {
+            result = (try? await seedProvider.nearbyPatios(around: coordinate,
+                                                           radiusMeters: searchRadiusMeters)) ?? []
+            fromSeed = !result.isEmpty
+        }
+
+        usingSeedData = fromSeed
+        apply(patios: result, around: coordinate, preservingSelectionID: selectedID)
+        loadState = patios.isEmpty ? .empty : .loaded
     }
 
     private func apply(patios newPatios: [Patio],
@@ -206,18 +198,4 @@ final class PatioViewModel: ObservableObject {
     }
 
     var hasHeading: Bool { locationService.currentHeadingDegrees != nil }
-
-    // MARK: Helpers
-
-    private func friendlyMessage(for error: Error) -> String {
-        if let providerError = error as? GooglePlacesProvider.ProviderError {
-            switch providerError {
-            case .missingAPIKey:
-                return "No Google Places API key configured."
-            case .badResponse(let status):
-                return "Places request failed (HTTP \(status))."
-            }
-        }
-        return "Couldn't load nearby patios."
-    }
 }
