@@ -1,6 +1,6 @@
 # PatioFinder Privacy Policy
 
-*Last updated: July 11, 2026*
+*Last updated: July 24, 2026*
 
 PatioFinder ("the app") is made by Justin Nikolaus. This policy explains what
 information the app uses and why, in plain language.
@@ -21,13 +21,11 @@ GPS location and compass heading. This is used entirely on your device to:
 - Calculate the live distance and walking ETA shown in the app
 - Sort and filter the list of nearby patios
 
-Your coordinates are sent to two outside services, solely to perform the
+Your coordinates are sent to one outside service, solely to perform the
 searches described above:
 
 - **Google Places API**, to find nearby restaurants with outdoor seating,
   their ratings, and whether they're currently open
-- **Apple WeatherKit**, to show the current temperature and conditions near
-  you
 
 Location is also used with **Apple MapKit** as a fallback search when Google
 Places has no results, and to open Apple Maps for walking directions when
@@ -54,7 +52,7 @@ location data passing through those queries is subject to their own privacy
 policies, which we don't control:
 
 - Google Places API — see [Google Privacy Policy](https://policies.google.com/privacy)
-- Apple MapKit / WeatherKit — see [Apple Privacy Policy](https://www.apple.com/legal/privacy/)
+- Apple MapKit — see [Apple Privacy Policy](https://www.apple.com/legal/privacy/)
 
 ## Location permission
 
