@@ -8,7 +8,7 @@ struct PatioFinderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            CompassScreen(viewModel: viewModel, location: viewModel.locationService, weather: viewModel.weather)
+            CompassScreen(viewModel: viewModel, location: viewModel.locationService)
                 .tint(Theme.accent)
                 .preferredColorScheme(prefersDarkMode ? .dark : .light)
                 .onChange(of: scenePhase) { _, phase in

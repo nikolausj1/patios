@@ -2,7 +2,7 @@
 title: "STATUS - Patio Finder"
 created: 2026-07-24
 modified: 2026-07-24
-version: 2.1
+version: 2.2
 author: Claude Opus 4.8 (claude-opus-4-8)
 tags:
 ---
@@ -11,32 +11,29 @@ tags:
 
 ## Project
 
-PatioFinder is an iPhone app with a Find-My-style compass arrow that rotates to point at the nearest outdoor restaurant patio, showing live distance, walking ETA, star rating, open-now status, current weather, and beer/wine/cocktail markers, with swipe-to-cycle, an Adult Drinks filter, and tap-to-directions via Apple Maps.
+PatioFinder is an iPhone app with a Find-My-style compass arrow that rotates to point at the nearest outdoor restaurant patio, showing live distance, walking ETA, star rating, open-now status, and beer/wine/cocktail markers, with swipe-to-cycle, an Adult Drinks filter, and tap-to-directions via Apple Maps.
 
 ## Stage
 
-Beta (feature-complete; version 1.0 was submitted to the App Store and came back with an App Review information request).
+Beta (feature-complete; version 1.0 build 3 resubmitted to App Review on 2026-07-24 and Waiting for Review).
 
 ## Health
 
-🔴 Blocked. App Review returned the submission under Guideline 5.2.5 asking for proof of WeatherKit attribution; the app is compliant, but the reply requires a screen recording from a physical iPhone that only Justin can make. Everything else is staged and ready.
+🟢 On-track. The 5.2.5 review issue was resolved by removing the weather feature entirely (code, UI, and entitlement); the reply was sent to App Review, build 3 swapped in, and the submission is back in the queue with no open blockers.
 
 ## Waiting on Me
 
-- [ ] **Record a ~30-second screen recording on the iPhone** showing the weather line and tapping its " Weather" attribution link, then drop it in `_inbox/` (~2 min)
-      - unblocks: the reply to Apple's 5.2.5 message, which is the only thing standing before resubmission
-- [ ] **Approve hosting the recording** (suggested: the public `patios` GitHub repo) so the reply can link to it (~1 min)
-      - unblocks: same as above; App Store Connect replies are text-only, so the video needs a URL
+Nothing.
 
 ## Next Up
 
-1. Justin records and drops the video; Claude hosts it, replies to Apple's message with the attribution explanation and link, and resubmits.
-2. Await the re-review; version 1.0 (build 2) releases automatically on approval.
-3. After approval, consider the Ideas Shelf items for a 1.1.
+1. Await the re-review (typically up to 48 hours); 1.0 releases automatically on approval.
+2. On approval, sanity-check the live App Store listing (weather-free description, icon, screenshots).
+3. Pick a 1.1 candidate from the Ideas Shelf; if weather returns, prepare the WeatherKit attribution screen recording before submitting.
 
 ## Biggest Risk
 
-The 5.2.5 reply sits unanswered until the physical-device recording exists; every day it waits is a day of review-queue time lost, and reviewers may eventually close stale submissions.
+A second review bounce on some new issue would restart the queue again; mitigations are already in place for the two known ones (WeatherKit removed; the reviewed binary now contains the Google key bundle-id header fix).
 
 ---
 
@@ -45,10 +42,11 @@ The 5.2.5 reply sits unanswered until the physical-device recording exists; ever
 - **Cuisine filter** (S): filter the arrow target and list by cuisine, on top of Google Places data already fetched.
 - **Favorites** (S-M): star a patio to jump straight to it, reusing existing list and selection plumbing.
 - **Text Search paging** (S-M): swap searchNearby (20-result cap) for Text Search with page tokens (up to 60) for denser city coverage.
+- **Weather glance 2.0** (M): re-add WeatherKit with the " Weather" attribution and a pre-made physical-device recording for review.
 - **Optional iPad (universal) support** (M): mostly layout work; would let it run on the household iPads too.
 
 ## App Store Readiness
 
-- Reviewed: version 1.0 build 1 on 2026-07-16; result was a Guideline 5.2.5 information request (WeatherKit attribution proof), not a content rejection.
-- Since then: build 2 (adds the Google key bundle-id header fix, wider patio coverage, drink markers, Adult Drinks filter, live refresh on movement/foreground) was uploaded, swapped into the 1.0 submission, and the App Review notes now explain the WeatherKit attribution and where it appears.
-- Remaining: Justin's screen recording → reply to the review message → resubmit. The app's attribution (" Weather" trademark linking to Apple's legal page, shown wherever weather data appears) already satisfies the guideline; the reply just has to demonstrate it.
+- 2026-07-16: build 1 reviewed; Guideline 5.2.5 information request (WeatherKit attribution proof).
+- 2026-07-24: weather feature and WeatherKit entitlement removed entirely (verified via codesign on the store binary); listing metadata, review notes, and the hosted privacy policy scrubbed of weather mentions; build 3 uploaded, swapped into the submission; reply sent confirming the app does not support WeatherKit; resubmitted — Waiting for Review.
+- The reviewed binary also carries the Google Places key fix (X-Ios-Bundle-Identifier header), adaptive city/rural patio search, drink markers, the Adult Drinks filter, and stale-data refresh.

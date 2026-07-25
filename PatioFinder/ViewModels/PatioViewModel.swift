@@ -29,8 +29,6 @@ final class PatioViewModel: ObservableObject {
 
     /// Owned so the whole location stack lives in one place. Views observe this too.
     let locationService = LocationService()
-    /// Current-conditions glance shown alongside the compass. Views observe this too.
-    let weather = WeatherGlance()
 
     // MARK: Config
     /// ~15 miles. Results are ranked by distance and capped at 20 by the Places
@@ -53,7 +51,6 @@ final class PatioViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var hasLoaded = false
     private var hasStarted = false
-    private var hasFetchedWeather = false
     /// Guards against a stale MKDirections response landing after the
     /// selection has already moved on.
     private var walkingETARequestID = UUID()
@@ -84,7 +81,7 @@ final class PatioViewModel: ObservableObject {
     }
 
     private func handleLocation(_ loc: CLLocation) {
-        // First good fix → load patios + a weather glance.
+        // First good fix → load patios.
         if !hasLoaded {
             hasLoaded = true
             lastSortLocation = loc
@@ -93,15 +90,10 @@ final class PatioViewModel: ObservableObject {
             // Moved to a new area (e.g. rode across town) → re-fetch, not just re-sort.
             lastSortLocation = loc
             Task { await load(around: loc.coordinate) }
-            Task { await weather.refresh(for: loc) }
         } else if let last = lastSortLocation, loc.distance(from: last) >= resortThresholdMeters {
             lastSortLocation = loc
             resort(around: loc)
             updateWalkingETA()
-        }
-        if !hasFetchedWeather {
-            hasFetchedWeather = true
-            Task { await weather.refresh(for: loc) }
         }
     }
 
@@ -111,7 +103,6 @@ final class PatioViewModel: ObservableObject {
         guard let loc = locationService.location, let last = lastLoadLocation else { return }
         if loc.distance(from: last) >= refetchThresholdMeters {
             Task { await load(around: loc.coordinate) }
-            Task { await weather.refresh(for: loc) }
         }
     }
 
@@ -120,7 +111,6 @@ final class PatioViewModel: ObservableObject {
     func refresh() {
         guard let loc = locationService.location else { return }
         Task { await load(around: loc.coordinate) }
-        Task { await weather.refresh(for: loc) }
     }
 
     /// Google (if configured) → keyless MapKit local search → bundled seed.

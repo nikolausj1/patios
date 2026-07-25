@@ -7,7 +7,6 @@ import UIKit
 struct CompassScreen: View {
     @ObservedObject var viewModel: PatioViewModel
     @ObservedObject var location: LocationService
-    @ObservedObject var weather: WeatherGlance
 
     @State private var showingList = false
     @State private var dragOffset: CGFloat = 0
@@ -219,8 +218,6 @@ struct CompassScreen: View {
                     .foregroundStyle(Theme.secondaryText)
             }
 
-            weatherGlanceView
-
             if let address = viewModel.selectedPatio?.displayAddress {
                 // Invisible button: tapping the address (or its map icon)
                 // opens walking directions.
@@ -249,29 +246,6 @@ struct CompassScreen: View {
             }
         }
         .padding(.top, 8)
-    }
-
-    @ViewBuilder
-    private var weatherGlanceView: some View {
-        if let summary = weather.summaryText {
-            VStack(spacing: 2) {
-                if weather.isGreatPatioWeather {
-                    Label("\(summary) — great patio weather", systemImage: "sun.max.fill")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(Theme.accent)
-                } else {
-                    Text(summary)
-                        .font(.caption)
-                        .foregroundStyle(Theme.secondaryText)
-                }
-
-                Link(destination: URL(string: "https://weatherkit.apple.com/legal-attribution.html")!) {
-                    Text("\u{F8FF} Weather")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.secondaryText.opacity(0.7))
-                }
-            }
-        }
     }
 
     private var footer: some View {
