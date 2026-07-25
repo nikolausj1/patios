@@ -1,36 +1,83 @@
 import SwiftUI
 
-/// A bold, rounded arrow that rotates to point toward the target.
-/// Distinct from Find My: warm amber fill, soft glow when aligned.
+/// A polished navigation-pointer that rotates to point toward the target,
+/// sitting inside a ticked compass bezel. Warm amber, glassy highlight,
+/// soft glow that blooms when aligned.
 struct ArrowView: View {
     /// Degrees to rotate. 0 = pointing straight up (toward the patio).
     var rotation: Double
     var isAligned: Bool
     var isActive: Bool          // false when heading/target unavailable → dimmed
 
+    private let size: CGFloat = 300
+
     var body: some View {
         ZStack {
-            // Faint guide ring, like a compass bezel.
+            // Soft radial glow that blooms when aligned.
             Circle()
-                .stroke(Color.primary.opacity(0.06), lineWidth: 2)
+                .fill(RadialGradient(
+                    colors: [Theme.accent.opacity(isAligned ? 0.30 : 0.10), .clear],
+                    center: .center, startRadius: 20, endRadius: size * 0.55))
 
-            // Tick at the top marking "straight ahead".
+            bezel
+
+            // Top marker: lights amber when you're pointed right at the patio.
             Capsule()
-                .fill(Color.primary.opacity(isAligned ? 0.0 : 0.12))
-                .frame(width: 4, height: 14)
-                .offset(y: -140)
+                .fill(isAligned ? Theme.accent : Color.primary.opacity(0.15))
+                .frame(width: 4, height: 16)
+                .offset(y: -(size / 2 - 8))
 
-            ArrowShape()
-                .fill(arrowGradient)
-                .frame(width: 120, height: 150)
-                .shadow(color: Theme.accent.opacity(isAligned ? 0.55 : 0.25),
-                        radius: isAligned ? 28 : 14, y: 6)
-                .rotationEffect(.degrees(rotation))
-                .animation(.spring(response: 0.35, dampingFraction: 0.75), value: rotation)
-                .opacity(isActive ? 1 : 0.25)
+            arrow
         }
-        .frame(width: 300, height: 300)
+        .frame(width: size, height: size)
         .animation(.easeInOut(duration: 0.25), value: isAligned)
+    }
+
+    // MARK: - Bezel (compass ticks)
+
+    private var bezel: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.primary.opacity(0.07), lineWidth: 1.5)
+
+            ForEach(0..<60, id: \.self) { i in
+                let isMajor = i % 15 == 0   // N / E / S / W positions
+                Capsule()
+                    .fill(Color.primary.opacity(isMajor ? 0.22 : 0.09))
+                    .frame(width: isMajor ? 3 : 1.5, height: isMajor ? 13 : 6)
+                    .offset(y: -(size / 2 - 18))
+                    .rotationEffect(.degrees(Double(i) * 6))
+            }
+        }
+    }
+
+    // MARK: - Arrow
+
+    private var arrow: some View {
+        ZStack {
+            NavArrowShape()
+                .fill(arrowGradient)
+
+            // Glassy specular highlight down the top half.
+            NavArrowShape()
+                .fill(LinearGradient(
+                    colors: [.white.opacity(0.38), .white.opacity(0)],
+                    startPoint: .top, endPoint: .center))
+
+            // Hairline rim to lift it off the background.
+            NavArrowShape()
+                .stroke(LinearGradient(
+                    colors: [.white.opacity(0.55), .white.opacity(0.05)],
+                    startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1)
+        }
+        .frame(width: 150, height: 162)
+        .shadow(color: Theme.accent.opacity(isAligned ? 0.60 : 0.28),
+                radius: isAligned ? 30 : 16, y: 8)
+        .scaleEffect(isAligned ? 1.05 : 1)
+        .rotationEffect(.degrees(rotation))
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: rotation)
+        .opacity(isActive ? 1 : 0.25)
     }
 
     private var arrowGradient: LinearGradient {
@@ -44,30 +91,36 @@ struct ArrowView: View {
     }
 }
 
-/// A rounded, tapered arrow pointing up.
-struct ArrowShape: Shape {
+/// Classic navigation-pointer silhouette (tip up, notched tail) with
+/// gently rounded vertices.
+struct NavArrowShape: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
+
+        let tip   = CGPoint(x: 0.50 * w, y: 0)
+        let right = CGPoint(x: 0.94 * w, y: 0.88 * h)
+        let notch = CGPoint(x: 0.50 * w, y: 0.64 * h)
+        let left  = CGPoint(x: 0.06 * w, y: 0.88 * h)
+        let r = 0.07 * w   // corner rounding radius
+
         var p = Path()
-
-        let tip = CGPoint(x: w * 0.5, y: 0)
-        let leftWing = CGPoint(x: w * 0.02, y: h * 0.62)
-        let rightWing = CGPoint(x: w * 0.98, y: h * 0.62)
-        let leftNotch = CGPoint(x: w * 0.5 - w * 0.16, y: h * 0.5)
-        let rightNotch = CGPoint(x: w * 0.5 + w * 0.16, y: h * 0.5)
-        let tailLeft = CGPoint(x: w * 0.5 - w * 0.16, y: h)
-        let tailRight = CGPoint(x: w * 0.5 + w * 0.16, y: h)
-
-        p.move(to: tip)
-        p.addQuadCurve(to: rightWing, control: CGPoint(x: w * 0.72, y: h * 0.10))
-        p.addQuadCurve(to: rightNotch, control: CGPoint(x: w * 0.62, y: h * 0.60))
-        p.addLine(to: tailRight)
-        p.addLine(to: tailLeft)
-        p.addLine(to: leftNotch)
-        p.addQuadCurve(to: leftWing, control: CGPoint(x: w * 0.38, y: h * 0.60))
-        p.addQuadCurve(to: tip, control: CGPoint(x: w * 0.28, y: h * 0.10))
+        p.move(to: along(tip, toward: left, by: r * 1.8))
+        p.addQuadCurve(to: along(tip, toward: right, by: r * 1.8), control: tip)
+        p.addLine(to: along(right, toward: tip, by: r))
+        p.addQuadCurve(to: along(right, toward: notch, by: r), control: right)
+        p.addLine(to: along(notch, toward: right, by: r))
+        p.addQuadCurve(to: along(notch, toward: left, by: r), control: notch)
+        p.addLine(to: along(left, toward: notch, by: r))
+        p.addQuadCurve(to: along(left, toward: tip, by: r), control: left)
         p.closeSubpath()
         return p
+    }
+
+    /// Point `d` pts from `a` along the segment toward `b`.
+    private func along(_ a: CGPoint, toward b: CGPoint, by d: CGFloat) -> CGPoint {
+        let dx = b.x - a.x, dy = b.y - a.y
+        let len = max(sqrt(dx * dx + dy * dy), 0.0001)
+        return CGPoint(x: a.x + dx / len * d, y: a.y + dy / len * d)
     }
 }

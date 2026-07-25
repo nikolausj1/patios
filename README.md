@@ -53,9 +53,9 @@ swiping, list, and map all work against that data.
    ```
    git update-index --skip-worktree Config.xcconfig
    ```
-5. Re‑run. The app now queries `places:searchNearby` for restaurants within ~4 km
-   and keeps those flagged with `outdoorSeating`. If the call returns nothing (or
-   fails), it falls back to the bundled sample list.
+5. Re‑run. The app now queries `places:searchNearby` for restaurants within ~15 miles
+   (ranked nearest‑first, max 20 results) and keeps those flagged with `outdoorSeating`.
+   If the call returns nothing (or fails), it falls back to the bundled sample list.
 
 ## How it works
 

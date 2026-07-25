@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import MapKit
 import Combine
 
 @MainActor
@@ -13,26 +14,49 @@ final class PatioViewModel: ObservableObject {
     }
 
     // MARK: Published state
-    @Published private(set) var patios: [Patio] = []      // sorted nearest-first
-    @Published var selectedIndex: Int = 0
+    @Published private(set) var patios: [Patio] = []      // filtered view of allPatios, sorted nearest-first
+    @Published var selectedIndex: Int = 0 {
+        didSet { updateWalkingETA() }
+    }
     @Published private(set) var loadState: LoadState = .idle
     @Published private(set) var usingSeedData = false
+    /// e.g. "12 min walk". `nil` while unknown or unavailable.
+    @Published private(set) var walkingETAText: String?
+    /// Global filter: when true, `patios` excludes places known NOT to serve alcohol.
+    @Published var alcoholOnly = true {
+        didSet { applyFilter(preservingSelectionID: currentSelectionID) }
+    }
 
     /// Owned so the whole location stack lives in one place. Views observe this too.
     let locationService = LocationService()
+    /// Current-conditions glance shown alongside the compass. Views observe this too.
+    let weather = WeatherGlance()
 
     // MARK: Config
-    private let searchRadiusMeters: Double = 4000
+    /// ~15 miles. Results are ranked by distance and capped at 20 by the Places
+    /// API, so a wide radius self-adapts: dense city → 20 close hits; rural →
+    /// the circle is wide enough to still find patios.
+    private let searchRadiusMeters: Double = 24_140
     /// Re-sort the list only after the user moves at least this far.
     private let resortThresholdMeters: Double = 25
+    /// Re-fetch (not just re-sort) once the user has moved this far from where
+    /// we last loaded — e.g. rode across town — so stale far-away results don't linger.
+    private let refetchThresholdMeters: Double = 800
 
     private let seedProvider = SeedPatioProvider()
     private let mapKitProvider = MapKitPatioProvider()
     private var liveProvider: PatioProvider?
+    /// The full fetched+sorted set, before the alcohol-only filter is applied.
+    private var allPatios: [Patio] = []
     private var lastSortLocation: CLLocation?
+    private var lastLoadLocation: CLLocation?
     private var cancellables = Set<AnyCancellable>()
     private var hasLoaded = false
     private var hasStarted = false
+    private var hasFetchedWeather = false
+    /// Guards against a stale MKDirections response landing after the
+    /// selection has already moved on.
+    private var walkingETARequestID = UUID()
 
     init() {
         if AppConfig.hasGooglePlacesKey {
@@ -60,17 +84,34 @@ final class PatioViewModel: ObservableObject {
     }
 
     private func handleLocation(_ loc: CLLocation) {
-        // First good fix → load patios.
+        // First good fix → load patios + a weather glance.
         if !hasLoaded {
             hasLoaded = true
             lastSortLocation = loc
             Task { await load(around: loc.coordinate) }
-            return
-        }
-        // Keep the nearest-first ordering fresh as the user moves.
-        if let last = lastSortLocation, loc.distance(from: last) >= resortThresholdMeters {
+        } else if let last = lastLoadLocation, loc.distance(from: last) >= refetchThresholdMeters {
+            // Moved to a new area (e.g. rode across town) → re-fetch, not just re-sort.
+            lastSortLocation = loc
+            Task { await load(around: loc.coordinate) }
+            Task { await weather.refresh(for: loc) }
+        } else if let last = lastSortLocation, loc.distance(from: last) >= resortThresholdMeters {
             lastSortLocation = loc
             resort(around: loc)
+            updateWalkingETA()
+        }
+        if !hasFetchedWeather {
+            hasFetchedWeather = true
+            Task { await weather.refresh(for: loc) }
+        }
+    }
+
+    /// Call when the app returns to the foreground: re-fetches if the user has
+    /// moved far enough since the last load while backgrounded.
+    func refreshIfMoved() {
+        guard let loc = locationService.location, let last = lastLoadLocation else { return }
+        if loc.distance(from: last) >= refetchThresholdMeters {
+            Task { await load(around: loc.coordinate) }
+            Task { await weather.refresh(for: loc) }
         }
     }
 
@@ -79,52 +120,76 @@ final class PatioViewModel: ObservableObject {
     func refresh() {
         guard let loc = locationService.location else { return }
         Task { await load(around: loc.coordinate) }
+        Task { await weather.refresh(for: loc) }
     }
 
+    /// Google (if configured) → keyless MapKit local search → bundled seed.
+    /// `usingSeedData` is only true when the seed actually supplied the data.
     private func load(around coordinate: CLLocationCoordinate2D) async {
+        lastLoadLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         loadState = .loading
         let selectedID = currentSelectionID
 
-        var result: [Patio] = []
-        var fromSeed = false
+        do {
+            var result: [Patio] = []
+            if let liveProvider {
+                result = try await liveProvider.nearbyPatios(around: coordinate,
+                                                             radiusMeters: searchRadiusMeters)
+            }
+            if result.isEmpty {
+                result = try await mapKitProvider.nearbyPatios(around: coordinate,
+                                                                radiusMeters: searchRadiusMeters)
+            }
+            if result.isEmpty {
+                result = try await seedProvider.nearbyPatios(around: coordinate,
+                                                            radiusMeters: searchRadiusMeters)
+                usingSeedData = !result.isEmpty
+            } else {
+                usingSeedData = false
+            }
 
-        // 1) Google Places (verified outdoor seating) when a key is configured.
-        if let liveProvider {
-            result = (try? await liveProvider.nearbyPatios(around: coordinate,
-                                                           radiusMeters: searchRadiusMeters)) ?? []
+            apply(patios: result, around: coordinate, preservingSelectionID: selectedID)
+            loadState = patios.isEmpty ? .empty : .loaded
+        } catch {
+            // Any throw along the chain → try MapKit, then the offline seed.
+            if let mapKitResult = try? await mapKitProvider.nearbyPatios(around: coordinate,
+                                                                         radiusMeters: searchRadiusMeters),
+               !mapKitResult.isEmpty {
+                usingSeedData = false
+                apply(patios: mapKitResult, around: coordinate, preservingSelectionID: selectedID)
+                loadState = .loaded
+            } else if let seed = try? await seedProvider.nearbyPatios(around: coordinate,
+                                                                       radiusMeters: searchRadiusMeters),
+                      !seed.isEmpty {
+                usingSeedData = true
+                apply(patios: seed, around: coordinate, preservingSelectionID: selectedID)
+                loadState = .loaded
+            } else {
+                loadState = .error(friendlyMessage(for: error))
+            }
         }
-        // 2) Apple MapKit — keyless local search (works with no API key).
-        if result.isEmpty {
-            result = (try? await mapKitProvider.nearbyPatios(around: coordinate,
-                                                             radiusMeters: searchRadiusMeters)) ?? []
-        }
-        // 3) Bundled sample list — last resort (e.g. offline).
-        if result.isEmpty {
-            result = (try? await seedProvider.nearbyPatios(around: coordinate,
-                                                           radiusMeters: searchRadiusMeters)) ?? []
-            fromSeed = !result.isEmpty
-        }
-
-        usingSeedData = fromSeed
-        apply(patios: result, around: coordinate, preservingSelectionID: selectedID)
-        loadState = patios.isEmpty ? .empty : .loaded
     }
 
     private func apply(patios newPatios: [Patio],
                        around coordinate: CLLocationCoordinate2D,
                        preservingSelectionID selectedID: String?) {
-        patios = sortedByDistance(newPatios, from: coordinate)
-        // Keep pointing at the same patio if it's still in the list.
-        if let selectedID, let idx = patios.firstIndex(where: { $0.id == selectedID }) {
-            selectedIndex = idx
-        } else {
-            selectedIndex = 0
-        }
+        allPatios = sortedByDistance(newPatios, from: coordinate)
+        applyFilter(preservingSelectionID: selectedID)
     }
 
     private func resort(around location: CLLocation) {
         let selectedID = currentSelectionID
-        patios = sortedByDistance(patios, from: location.coordinate)
+        allPatios = sortedByDistance(allPatios, from: location.coordinate)
+        applyFilter(preservingSelectionID: selectedID)
+    }
+
+    /// Re-derives `patios` (the filtered, view-facing list) from `allPatios`,
+    /// then restores the selection by id if possible.
+    private func applyFilter(preservingSelectionID selectedID: String?) {
+        var filtered = alcoholOnly ? allPatios.filter { !$0.isKnownNonAlcoholic } : allPatios
+        // Safety: never empty out the app when the full set has something.
+        if filtered.isEmpty && !allPatios.isEmpty { filtered = allPatios }
+        patios = filtered
         if let selectedID, let idx = patios.firstIndex(where: { $0.id == selectedID }) {
             selectedIndex = idx
         } else {
@@ -198,4 +263,52 @@ final class PatioViewModel: ObservableObject {
     }
 
     var hasHeading: Bool { locationService.currentHeadingDegrees != nil }
+
+    // MARK: Walking ETA
+
+    private func updateWalkingETA() {
+        walkingETAText = nil
+        guard let user = locationService.location, let patio = selectedPatio else { return }
+
+        let requestID = UUID()
+        walkingETARequestID = requestID
+        let patioID = patio.id
+
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: user.coordinate))
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: patio.coordinate))
+        request.transportType = .walking
+
+        Task { [weak self] in
+            guard let self else { return }
+            guard let eta = try? await MKDirections(request: request).calculateETA() else { return }
+            // Discard if the selection changed while the request was in flight.
+            guard self.walkingETARequestID == requestID, self.selectedPatio?.id == patioID else { return }
+            self.walkingETAText = Self.formatWalkingETA(seconds: eta.expectedTravelTime)
+        }
+    }
+
+    private static func formatWalkingETA(seconds: TimeInterval) -> String {
+        let minutes = max(1, Int((seconds / 60).rounded(.up)))
+        if minutes >= 90 {
+            let hours = minutes / 60
+            let remainder = minutes % 60
+            return remainder == 0 ? "\(hours) hr walk" : "\(hours) hr \(remainder) min walk"
+        }
+        return "\(minutes) min walk"
+    }
+
+    // MARK: Helpers
+
+    private func friendlyMessage(for error: Error) -> String {
+        if let providerError = error as? GooglePlacesProvider.ProviderError {
+            switch providerError {
+            case .missingAPIKey:
+                return "No Google Places API key configured."
+            case .badResponse(let status):
+                return "Places request failed (HTTP \(status))."
+            }
+        }
+        return "Couldn't load nearby patios."
+    }
 }

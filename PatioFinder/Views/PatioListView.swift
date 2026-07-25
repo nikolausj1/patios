@@ -21,6 +21,7 @@ struct PatioListView: View {
                 }
             }
             .listStyle(.plain)
+            .safeAreaInset(edge: .top) { alcoholFilterBar }
             .navigationTitle("Nearby Patios")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -31,6 +32,23 @@ struct PatioListView: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+    }
+
+    /// Segmented control for the global alcohol filter: "Adult Drinks" (only
+    /// places that serve alcohol) vs. "All Patios".
+    private var alcoholFilterBar: some View {
+        Picker("Patio filter", selection: Binding(
+            get: { viewModel.alcoholOnly },
+            set: { newValue in withAnimation { viewModel.alcoholOnly = newValue } }
+        )) {
+            Text("Adult Drinks").tag(true)
+            Text("All Patios").tag(false)
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .background(.bar)
     }
 
     private func row(for patio: Patio, index: Int) -> some View {
@@ -55,6 +73,16 @@ struct PatioListView: View {
                         .font(.caption)
                         .foregroundStyle(Theme.secondaryText)
                         .lineLimit(1)
+                }
+                if let openNow = patio.openNow {
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(openNow ? .green : .red)
+                            .frame(width: 6, height: 6)
+                        Text(openNow ? "Open" : "Closed")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(Theme.secondaryText)
                 }
             }
 

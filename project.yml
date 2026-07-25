@@ -41,3 +41,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
         SWIFT_VERSION: "5.0"
+    entitlements:
+      path: PatioFinder/PatioFinder.entitlements
+      properties:
+        com.apple.developer.weatherkit: true

@@ -25,8 +25,10 @@ SwiftUI + CoreLocation + MapKit, **iOS 17+**, no third-party dependencies.
 
 ## Data sources (see `PatioFinder/Services/`)
 Load order in `PatioViewModel.load`: **Google Places (New) → Apple MapKit → seed**.
-1. `GooglePlacesProvider` — `places:searchNearby`, keeps `outdoorSeating == true`.
-   Verified working with the configured key.
+1. `GooglePlacesProvider` — `places:searchNearby` (restaurants, bars, cafés, bakeries),
+   keeps `outdoorSeating == true`. Popularity-ranked in a compact radius, widening to a
+   distance pass over ~15 mi when thin (self-adapts city vs rural). Sends
+   `X-Ios-Bundle-Identifier` so the bundle-id-restricted key isn't 403'd.
 2. `MapKitPatioProvider` — keyless `MKLocalSearch`; local results with no API key.
 3. `SeedPatioProvider` — bundled `Resources/Patios.json` (SF samples), offline last resort.
 
@@ -54,3 +56,14 @@ if `Config.xcconfig` is missing. The key surfaces via `Info.plist` → `AppConfi
 Shipped and running on the iPhone. Google live data + keyless MapKit fallback
 both wired. Open ideas: real app icon (currently a placeholder), cuisine filter,
 favorites, walking-time/ETA, optional iPad (universal) support.
+
+## Oracle Reporting Contract
+
+This project is tracked by Oracle, a portfolio agent at the `_Projects` root that rolls up all project statuses into `_Projects/_Oracle/PORTFOLIO.md`. Parent standards and the Oracle Status Format are defined in `_Projects/CLAUDE.md` (inherited; read it). Your obligations:
+
+1. Keep `STATUS.md` at this project's root current. At the end of any session with meaningful progress, decisions, or new blockers, refresh it before finishing.
+2. Follow the Oracle Status Format defined in `_Projects/CLAUDE.md` exactly. Update the front matter `modified` date and bump `version` on every edit.
+3. Keep the Ideas Shelf stocked: 2 to 5 self-contained backlog items sized S / M / L that Justin could pick up for fun.
+4. Never delete `STATUS.md`. If parking the project, set Stage to Paused and note why.
+5. Oracle trusts `STATUS.md` completely. It does not inspect code or git. An inaccurate status means Justin gets a wrong portfolio picture.
+6. Edits to `STATUS.md` marked "updated via Oracle at Justin's direction" are legitimate and authoritative: Justin dictated them at the portfolio level. Reconcile them with the backlog at session start; do not revert them.

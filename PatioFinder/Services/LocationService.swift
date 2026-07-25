@@ -32,8 +32,19 @@ final class LocationService: NSObject, ObservableObject {
         manager.stopUpdatingHeading()
     }
 
+    /// Screenshot hook (household Build Guide pattern): `-demoHeading <degrees>`
+    /// fakes a fixed compass heading where no magnetometer exists (Simulator).
+    /// Real devices launched normally never hit this path.
+    private let demoHeading: Double? = {
+        let args = ProcessInfo.processInfo.arguments
+        guard let idx = args.firstIndex(of: "-demoHeading"),
+              args.indices.contains(idx + 1) else { return nil }
+        return Double(args[idx + 1])
+    }()
+
     /// True heading when available (needs location), otherwise magnetic heading.
     var currentHeadingDegrees: Double? {
+        if let demoHeading { return demoHeading }
         guard let heading else { return nil }
         if heading.trueHeading >= 0 { return heading.trueHeading }
         return heading.magneticHeading
