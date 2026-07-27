@@ -2,7 +2,7 @@
 title: "STATUS - Patio Finder"
 created: 2026-07-24
 modified: 2026-07-24
-version: 2.3
+version: 2.4
 author: Claude Opus 4.8 (claude-opus-4-8)
 tags:
 ---
@@ -23,12 +23,13 @@ Beta (feature-complete; version 1.0 build 3 resubmitted to App Review on 2026-07
 
 ## Waiting on Me
 
-Nothing.
+- [ ] **Field-test the new Text Search patio engine** already running on the iPhone: walk a couple of Seattle blocks and confirm the nearest-patio results feel right (~15 min)
+      - unblocks: the green light to publish it as 1.1 the moment 1.0 is approved
 
 ## Next Up
 
 1. Await the re-review (typically up to 48 hours); 1.0 releases automatically on approval.
-2. On approval, ship 1.1 immediately: the Text Search patio engine (7-8x more patios, catches the place you are standing next to) is already built, validated from two Seattle locations, and running on the iPhone.
+2. STANDING PLAN: once 1.0 is approved AND Justin's field test confirms the new engine is good, publish it as 1.1 (bump version, upload, submit) without further prompting.
 3. Sanity-check the live App Store listing after approval (weather-free description, icon, screenshots).
 
 ## Biggest Risk
@@ -51,3 +52,8 @@ Post-submission (local, destined for 1.1): the Google provider was rewritten aro
 - 2026-07-16: build 1 reviewed; Guideline 5.2.5 information request (WeatherKit attribution proof).
 - 2026-07-24: weather feature and WeatherKit entitlement removed entirely (verified via codesign on the store binary); listing metadata, review notes, and the hosted privacy policy scrubbed of weather mentions; build 3 uploaded, swapped into the submission; reply sent confirming the app does not support WeatherKit; resubmitted — Waiting for Review.
 - The reviewed binary also carries the Google Places key fix (X-Ios-Bundle-Identifier header), adaptive city/rural patio search, drink markers, the Adult Drinks filter, and stale-data refresh.
+
+## Lessons
+
+- Google Maps/Places API keys restricted to an iOS bundle id reject raw `URLSession` calls with 403 `API_KEY_IOS_APP_BLOCKED` unless every request sends an `X-Ios-Bundle-Identifier` header matching the restriction; the Google SDK adds it silently, hand-rolled clients must add it themselves. Bit this project in production: the app silently fell back to a worse data source.
+- The App Store Connect API cannot create app records (web UI only), and `xcodebuild -exportArchive` with ASC API-key auth 403s on cloud-managed distribution certificates unless the key has cert privileges; running the same export with no auth flags uses the Mac's signed-in Xcode account and succeeds. Relevant to every iOS app shipped from this machine.
