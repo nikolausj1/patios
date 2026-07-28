@@ -2,7 +2,7 @@
 title: "STATUS - Patio Finder"
 created: 2026-07-24
 modified: 2026-07-27
-version: 2.6
+version: 2.7
 author: Claude Opus 4.8 (claude-opus-4-8)
 tags:
 ---
@@ -43,6 +43,7 @@ A 1.1 review bounce would delay the much-better patio engine reaching users; low
 - **Favorites** (S-M): star a patio to jump straight to it, reusing existing list and selection plumbing.
 - **Weather glance 2.0** (M): re-add WeatherKit with the " Weather" attribution and a pre-made physical-device recording for review.
 - **Optional iPad (universal) support** (M): mostly layout work; would let it run on the household iPads too.
+- **App Store name + subtitle** (S): consider renaming to "Patio Finder: <short tagline>". Text-only App Store change, no build needed, but the name field caps at 30 chars (about 16 left after "Patio Finder: "), must be unique on the store, and rides a version review. Decide name-with-colon vs. using the separate 30-char Subtitle field. Do it on a future version so the in-review release is not disturbed; the home-screen icon label (CFBundleDisplayName) is separate and would need a build if changed too.
 
 ## App Store Readiness
 
