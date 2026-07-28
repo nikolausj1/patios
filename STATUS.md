@@ -1,8 +1,8 @@
 ---
 title: "STATUS - Patio Finder"
 created: 2026-07-24
-modified: 2026-07-24
-version: 2.4
+modified: 2026-07-27
+version: 2.6
 author: Claude Opus 4.8 (claude-opus-4-8)
 tags:
 ---
@@ -15,26 +15,25 @@ PatioFinder is an iPhone app with a Find-My-style compass arrow that rotates to 
 
 ## Stage
 
-Beta (feature-complete; version 1.0 build 3 resubmitted to App Review on 2026-07-24 and Waiting for Review).
+Live (version 1.0 is on the App Store; version 1.1 with the Text Search patio engine was submitted 2026-07-27 and is Waiting for Review).
 
 ## Health
 
-🟢 On-track. The 5.2.5 review issue was resolved by removing the weather feature entirely (code, UI, and entitlement); the reply was sent to App Review, build 3 swapped in, and the submission is back in the queue with no open blockers.
+🟢 On-track. 1.0 was approved and is Ready for Sale; 1.1 (build 4, the Text Search engine that finds up to 60 nearby patios) is submitted and Waiting for Review with release notes set. No open blockers.
 
 ## Waiting on Me
 
-- [ ] **Field-test the new Text Search patio engine** already running on the iPhone: walk a couple of Seattle blocks and confirm the nearest-patio results feel right (~15 min)
-      - unblocks: the green light to publish it as 1.1 the moment 1.0 is approved
+Nothing.
 
 ## Next Up
 
-1. Await the re-review (typically up to 48 hours); 1.0 releases automatically on approval.
-2. STANDING PLAN: once 1.0 is approved AND Justin's field test confirms the new engine is good, publish it as 1.1 (bump version, upload, submit) without further prompting.
-3. Sanity-check the live App Store listing after approval (weather-free description, icon, screenshots).
+1. Await the 1.1 review; it releases automatically on approval.
+2. Sanity-check the live App Store product page (listing, icon, screenshots) now that the app is public.
+3. Pick the next feature from the Ideas Shelf (cuisine filter and favorites are the small ones).
 
 ## Biggest Risk
 
-A second review bounce on some new issue would restart the queue again; mitigations are already in place for the two known ones (WeatherKit removed; the reviewed binary now contains the Google key bundle-id header fix).
+A 1.1 review bounce would delay the much-better patio engine reaching users; low likelihood, since 1.1 changes only the data-fetch strategy relative to the approved 1.0 binary.
 
 ---
 
@@ -51,9 +50,10 @@ Post-submission (local, destined for 1.1): the Google provider was rewritten aro
 
 - 2026-07-16: build 1 reviewed; Guideline 5.2.5 information request (WeatherKit attribution proof).
 - 2026-07-24: weather feature and WeatherKit entitlement removed entirely (verified via codesign on the store binary); listing metadata, review notes, and the hosted privacy policy scrubbed of weather mentions; build 3 uploaded, swapped into the submission; reply sent confirming the app does not support WeatherKit; resubmitted — Waiting for Review.
-- The reviewed binary also carries the Google Places key fix (X-Ios-Bundle-Identifier header), adaptive city/rural patio search, drink markers, the Adult Drinks filter, and stale-data refresh.
+- 2026-07-27: 1.0 approved and Ready for Sale. Same day, 1.1 (build 4, Text Search engine) was uploaded, its version record created via the ASC API with release notes, build attached, and submitted — Waiting for Review.
+- The 1.0 binary also carries the Google Places key fix (X-Ios-Bundle-Identifier header), adaptive city/rural patio search, drink markers, the Adult Drinks filter, and stale-data refresh.
 
 ## Lessons
 
-- Google Maps/Places API keys restricted to an iOS bundle id reject raw `URLSession` calls with 403 `API_KEY_IOS_APP_BLOCKED` unless every request sends an `X-Ios-Bundle-Identifier` header matching the restriction; the Google SDK adds it silently, hand-rolled clients must add it themselves. Bit this project in production: the app silently fell back to a worse data source.
-- The App Store Connect API cannot create app records (web UI only), and `xcodebuild -exportArchive` with ASC API-key auth 403s on cloud-managed distribution certificates unless the key has cert privileges; running the same export with no auth flags uses the Mac's signed-in Xcode account and succeeds. Relevant to every iOS app shipped from this machine.
+- Google Maps/Places API keys restricted to an iOS bundle id reject raw `URLSession` calls with 403 `API_KEY_IOS_APP_BLOCKED` unless every request sends an `X-Ios-Bundle-Identifier` header matching the restriction; the Google SDK adds it silently, hand-rolled clients must add it themselves. Bit this project in production: the app silently fell back to a worse data source. (promoted to Build Guide v2.8, 2026-07-27)
+- The App Store Connect API cannot create app records (web UI only), and `xcodebuild -exportArchive` with ASC API-key auth 403s on cloud-managed distribution certificates unless the key has cert privileges; running the same export with no auth flags uses the Mac's signed-in Xcode account and succeeds. Relevant to every iOS app shipped from this machine. (promoted to Build Guide v2.8, 2026-07-27)
