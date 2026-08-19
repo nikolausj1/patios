@@ -21,7 +21,7 @@ set -euo pipefail
 PROJECT="PatioFinder.xcodeproj"
 SCHEME="PatioFinder"
 CONFIG="${CONFIG:-Debug}"
-DERIVED="build"
+DERIVED="/tmp/patiofinder-build"
 TEAM="${TEAM:-6A4J2GTB6F}"                                    # Justin Nikolaus (paid)
 BUNDLE_ID="${BUNDLE_ID:-com.levelup.patiofinder}"             # com.levelup.<shortname>
 DEVICE="${DEVICE:-DA1CF583-BC81-54E3-AFA8-11C8388367A6}"      # iPhone 16 Pro Max (adult)
