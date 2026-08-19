@@ -2,7 +2,7 @@
 title: "STATUS - Patio Finder"
 created: 2026-07-24
 modified: 2026-08-19
-version: 2.8
+version: 2.9
 author: Claude Opus 5 (claude-opus-5)
 tags:
 ---
@@ -27,8 +27,8 @@ Nothing. In particular, the Google deprecation email needs **no Google Cloud Con
 
 ## Next Up
 
-1. Run `./deploy.sh` on the physical iPhone once, to confirm the build still succeeds now that DerivedData goes to `/tmp/patiofinder-build` instead of an in-repo `build/`. This is the only change since 1.1 shipped and it is unverified on device.
-2. Make Google-provider failure loud rather than silent (see Biggest Risk). Currently a Places outage, billing lapse, or key restriction silently degrades the app to MapKit results with no user-visible signal.
+1. Make Google-provider failure loud rather than silent (see Biggest Risk). Currently a Places outage, billing lapse, or key restriction silently degrades the app to MapKit results with no user-visible signal.
+2. Fix the stale success footer in `deploy.sh` (line 112): it prints "It starts in demo mode (sample SF patios). Add your Google Places key..." unconditionally on every run, including runs where the key is present and the live provider is active. Gate it on the key actually being set. Pairs naturally with item 1 — both are misleading-signal bugs pointing in opposite directions.
 3. Pick the 1.2 feature from the Ideas Shelf. Cuisine filter and favorites are the small ones; the App Store name/subtitle change is now unblocked since nothing is in review.
 
 ## Biggest Risk
@@ -58,7 +58,8 @@ Shipped. 1.1 is live and carries the Text Search engine (patio-relevance ranking
 ## Since 1.1
 
 - Repo moved out of Dropbox to `~/_Developer/Patio Finder` via a fresh clone (the old repo's git was corrupt; everything committed was safe on GitHub). The Dropbox copy is a leftover with a `MOVED.md` and is not to be read or written.
-- `deploy.sh` now builds into `/tmp/patiofinder-build` rather than an in-repo `build/`, so build output never enters a synced folder again. Merged as `23cb49f`. Not yet exercised on device.
+- `deploy.sh` now builds into `/tmp/patiofinder-build` rather than an in-repo `build/`, so build output never enters a synced folder again. Merged as `23cb49f`. **Verified on device 2026-08-19**: full `./deploy.sh` run built, signed, installed, and launched on the iPhone (`JustinN`, iPhone 16 Pro Max); no `build/` directory was recreated in the repo and 89 MB of DerivedData landed in `/tmp`. Note `/tmp` is cleared periodically by macOS, so the first build after a reboot is cold.
+- Confirmed during that run that the Google key reaches the binary: the built `PatioFinder.app/Info.plist` carries a 39-character `GooglePlacesAPIKey`, so the live provider is active. The `deploy.sh` "demo mode" footer that suggests otherwise is unconditional output, not a real signal (see Next Up item 2).
 - Google Maps Platform deprecation notice (2026-08-19, project `boreal-physics-172622`) triaged: **not applicable**. It deprecates `GMSPlacesClient` / `PlacesClient` search methods in the Places SDK for iOS, removed in SDK 12.0.0 in Q3 2027. This app links no SDK — `GooglePlacesProvider` POSTs directly to the `places.googleapis.com/v1` REST endpoints over `URLSession`. Google's official deprecations page lists nothing against those web-service endpoints. No code change, no console change.
 
 ## Lessons
@@ -67,4 +68,5 @@ Shipped. 1.1 is live and carries the Text Search engine (patio-relevance ranking
 - The App Store Connect API cannot create app records (web UI only), and `xcodebuild -exportArchive` with ASC API-key auth 403s on cloud-managed distribution certificates unless the key has cert privileges; running the same export with no auth flags uses the Mac's signed-in Xcode account and succeeds. Relevant to every iOS app shipped from this machine. (promoted to Build Guide v2.8, 2026-07-27)
 - Google Maps Platform deprecation emails are scoped to one *surface*, and the surfaces share method names. A notice titled for the Places SDK for iOS lists only Objective-C/Swift method signatures (`GMSPlacesClient`, `PlacesClient`) and does not touch apps that call the Places API (New) REST endpoints `places:searchText` / `places:searchNearby` directly — despite the identical names. Before planning any migration, check whether the project actually links the SDK (a dependency-free project calling `places.googleapis.com/v1` over `URLSession` does not), and confirm against https://developers.google.com/maps/deprecations, which is the authority and lists the web-service endpoints nowhere. These emails go to every Cloud project with the API enabled, not only to projects Google detected using the deprecated calls, so "your affected projects" is not evidence of exposure.
 - An app's live App Store version and release date can be read without App Store Connect credentials from the public iTunes Lookup API: `https://itunes.apple.com/lookup?bundleId=<bundle id>` returns `version`, `currentVersionReleaseDate`, and the release notes as JSON. Fastest way to reconcile a stale "Waiting for Review" status in a status file against reality.
+- Verify configuration reaches the *built binary*, not the build script's own output. A deploy script's closing message can be an unconditional `echo` that has drifted from reality — here it announced "demo mode, add your API key" on every run, including runs where the key was correctly injected. The check that actually settles it is reading the value out of the built product (`PlistBuddy -c "Print :SomeKey" .../YourApp.app/Info.plist`) and asserting on its length or prefix shape rather than printing it, which keeps secrets out of the transcript.
 - Never let Xcode DerivedData live inside a cloud-synced folder (Dropbox, iCloud Drive). A single in-repo `build/` directory wedged Dropbox with 2,529 files here and coincided with git corruption that cost the local history. Point `-derivedDataPath` at `/tmp` or `~/Library/Developer/Xcode/DerivedData`; a `.gitignore` entry keeps it out of git but does nothing about the sync client.
